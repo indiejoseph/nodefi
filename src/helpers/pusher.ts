@@ -58,7 +58,7 @@ export class PusherClient {
   public async addDeviceInterest(interest: string) {
     try {
       await this.client.addDeviceInterest(interest);
-    } catch(e) {
+    } catch (e) {
       debug('addDeviceInterest error: ', e);
     }
   }
@@ -71,7 +71,7 @@ export class PusherClient {
 
   public async removeDeviceInterest(interest: string) {
     try {
-      await this.client.removeDeviceInterest(topic);
+      await this.client.removeDeviceInterest(interest);
     } catch (e) {
       debug('removeDeviceInterest error: ', e);
     }
