@@ -12,8 +12,6 @@ if (!GOOGLE_APPLICATION_CREDENTIALS) {
   throw new Error('No GOOGLE_APPLICATION_CREDENTIALS');
 }
 
-console.log(GOOGLE_APPLICATION_CREDENTIALS);
-
 const decryptedCredentials = decrypt(encryptedGoogleCredentials, GOOGLE_APPLICATION_CREDENTIALS);
 
 const credentials = JSON.parse(Buffer.from(decryptedCredentials, 'base64').toString());

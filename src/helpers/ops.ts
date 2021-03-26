@@ -46,7 +46,7 @@ export async function getTweets(screenName: string) {
   const tweets = await twitClient.get('statuses/user_timeline', {
     exclude_replies: true,
     screen_name: screenName,
-    count: 3,
+    count: 2,
     include_rts: false,
   });
 
@@ -114,7 +114,7 @@ export async function getTopics(address: string, network: string): Promise<strin
 
       return contract;
     })
-    .reduce(asyncParallel<Contract>(5), Promise.resolve([] as Contract[]));
+    .reduce(asyncParallel<Contract>(12), Promise.resolve([] as Contract[]));
   const topics = contracts
     .map(({ slug }) => slug)
     .filter((slug, index, arr) => arr.indexOf(slug) !== index) // remove duplicated
@@ -148,7 +148,7 @@ export async function getFeeds(address: string, network: string) {
 
         return [] as Tweet[];
       })
-      .reduce(asyncParallel<Feed[]>(5), Promise.resolve([] as Feed[][]))
+      .reduce(asyncParallel<Feed[]>(12), Promise.resolve([] as Feed[][]))
   )
     // flatten the array
     .reduce((arr, tweets) => arr.concat(tweets), [])
