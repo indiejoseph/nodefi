@@ -2,7 +2,7 @@ import Debug from 'debug';
 import React, { createContext, useState } from 'react';
 import { PusherClient } from '../helpers/pusher';
 
-const debug = Debug('web:use-push');
+const debug = Debug('web:push.context');
 
 declare global {
   interface Window {

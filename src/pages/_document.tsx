@@ -4,7 +4,23 @@ import { createGlobalStyle, ServerStyleSheet } from 'styled-components';
 
 const AppGlobalStyle = createGlobalStyle`
   button, html, input, select, textarea {
-    font-family: 'Proxima Nova',Helvetica,Arial,sans-serif;
+    font-family: 'Source Sans Pro',Helvetica,Arial,sans-serif;
+    font-size: 16px;
+  }
+
+  *, *:before, *:after {
+    box-sizing: inherit;
+    text-rendering: geometricPrecision;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
+
+    &:hover {
+      color: #7928ca!important;
+    }
   }
 
   body, html {
@@ -13,8 +29,6 @@ const AppGlobalStyle = createGlobalStyle`
     -webkit-touch-callout: none;
     min-height: 100%;
     text-size-adjust: 100%;
-    -webkit-font-smooth: antialiased;
-    -moz-osx-font-smooth: grayscale;
     height: 100%;
     position: relative;
   }

@@ -55,13 +55,21 @@ export class PusherClient {
     }
   }
 
+  public async addDeviceInterest(interest: string) {
+    try {
+      await this.client.addDeviceInterest(interest);
+    } catch(e) {
+      debug('addDeviceInterest error: ', e);
+    }
+  }
+
   public async getDeviceInterest() {
     const interests = await this.client.getDeviceInterests();
 
     return interests;
   }
 
-  public async removeDeviceInterest(topic: string) {
+  public async removeDeviceInterest(interest: string) {
     try {
       await this.client.removeDeviceInterest(topic);
     } catch (e) {

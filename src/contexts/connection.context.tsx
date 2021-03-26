@@ -4,7 +4,7 @@ import { providers, Signer } from 'ethers';
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import Web3Modal, { IProviderOptions } from 'web3modal';
 
-const debug = Debug('web:ether-connection');
+const debug = Debug('web:connection.context');
 
 const providerOptions: Partial<IProviderOptions> = {
   walletconnect: {
@@ -20,12 +20,14 @@ export interface ConnectionProps {
   signer: Signer | null;
   address: string | null;
   isConnected: boolean;
-  connectWeb3?: () => Promise<void>;
+  isInitialized: boolean;
+  connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
 }
 
 export const ConnectContext = createContext<ConnectionProps>({
   isConnected: false,
+  isInitialized: false,
   provider: null,
   signer: null,
   address: null,
@@ -37,6 +39,7 @@ export const ConnectionProvider: React.FC = ({ children }) => {
   const [signer, setSigner] = useState<Signer | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     debug('setup web3Modal');
@@ -50,7 +53,7 @@ export const ConnectionProvider: React.FC = ({ children }) => {
     );
   }, []);
 
-  const connectWeb3 = useCallback(async () => {
+  const connect = useCallback(async () => {
     if (web3Modal) {
       try {
         const modalProvider = await web3Modal.connect();
@@ -81,20 +84,25 @@ export const ConnectionProvider: React.FC = ({ children }) => {
     if (web3Modal?.cachedProvider) {
       debug('got cachedProvider');
       // eslint-disable-next-line no-console
-      connectWeb3().catch(ex => {
-        debug('connectWeb3 error: ', ex);
-      });
+      connect()
+        .then(() => setIsInitialized(true))
+        .catch(ex => {
+          debug('connect error: ', ex);
+        });
+    } else {
+      setIsInitialized(true);
     }
-  }, [web3Modal, connectWeb3]);
+  }, [web3Modal, connect]);
 
   return (
     <ConnectContext.Provider
       value={{
-        connectWeb3,
+        connect,
         disconnect,
         address,
         signer,
         isConnected,
+        isInitialized,
         provider,
       }}
     >

@@ -1,5 +1,5 @@
 import { Datastore } from '@google-cloud/datastore';
-import { Contract, Project } from '../interfaces';
+import { Contract, Project, Status } from '../interfaces';
 
 const { GOOGLE_APPLICATION_CREDENTIALS, GCP_PROJECT_ID } = process.env;
 
@@ -44,4 +44,84 @@ export async function getProject(slug: string): Promise<Project> {
     logo,
     description,
   };
+}
+
+/**
+ * Get all projects
+ * @returns all projects
+ */
+export async function getAllProjects(): Promise<Project[]> {
+  const query = datastore.createQuery('projects');
+  const [projects] = await datastore.runQuery(query);
+
+  return projects;
+}
+
+/**
+ * Get earliest status
+ * @returns earliest status
+ */
+export async function getEarliestStatuses(limit = 10): Promise<Status[]> {
+  const query = datastore.createQuery('statuses').order('updatedAt').limit(limit);
+  const [status] = await datastore.runQuery(query);
+
+  return status;
+}
+
+/**
+ * create a status
+ * @param slug
+ * @param status
+ */
+export async function createStatus(slug: string, status: Status) {
+  const key = datastore.key(['statuses', `${status.type}/${slug}`]);
+
+  await datastore.save({
+    key,
+    data: [
+      {
+        name: 'type',
+        value: status.type,
+      },
+      {
+        name: 'username',
+        value: status.username,
+      },
+      {
+        name: 'updatedAt',
+        value: new Date(),
+      },
+      ...(status.sinceId
+        ? [
+            {
+              name: 'sinceId',
+              value: status.sinceId,
+            },
+          ]
+        : []),
+    ],
+  });
+}
+
+/**
+ * update a status
+ * @param slug
+ * @param sinceId
+ */
+export async function updateStatus(
+  slug: string,
+  type: 'twitter' | 'discord' | 'telegram' | 'snapshot',
+  sinceId?: string
+) {
+  const key = datastore.key(['statuses', `${type}/${slug}`]);
+  const [entity] = await datastore.get(key);
+
+  await datastore.save({
+    key,
+    data: {
+      ...entity,
+      updatedAt: new Date(),
+      sinceId,
+    },
+  });
 }
