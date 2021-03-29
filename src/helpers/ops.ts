@@ -123,39 +123,25 @@ export async function getTopics(address: string, network: string): Promise<strin
   return Array.from(new Set(topics));
 }
 
-export async function getFeeds(address: string, network: string) {
-  const topics = await getTopics(address, network);
-  const feeds = (
-    await topics
-      .map(topic => async () => {
-        const project = await getProject(topic);
-        const twitter = (project.socialLinks.find(s => s.type === 'twitter') || {}).url || null;
+export async function getFeeds(topic: string) {
+  const project = await getProject(topic);
+  const twitter = (project.socialLinks.find(s => s.type === 'twitter') || {}).url || null;
+  let feeds: Feed[] = [];
 
-        if (twitter) {
-          const handle = twitter.split('https://twitter.com/')[1];
-          const tweets = await getTweets(handle);
+  if (twitter) {
+    const handle = twitter.split('https://twitter.com/')[1];
+    const tweets = await getTweets(handle);
 
-          return tweets.map<Feed>(tweet => ({
-            id: tweet.id_str,
-            avatar: `${IMAGE_CDN_PREFIX}${project.logo}`,
-            url: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`,
-            description: tweet.text,
-            date: new Date(tweet.created_at),
-            profileUrl: `https://twitter.com/${tweet.user.screen_name}`,
-            profileName: project.name,
-          })) as Feed[];
-        }
+    feeds = tweets.map<Feed>(tweet => ({
+      id: tweet.id_str,
+      avatar: `${IMAGE_CDN_PREFIX}${project.logo}`,
+      url: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`,
+      description: tweet.text,
+      date: new Date(tweet.created_at),
+      profileUrl: `https://twitter.com/${tweet.user.screen_name}`,
+      profileName: project.name,
+    })) as Feed[];
+  }
 
-        return [] as Tweet[];
-      })
-      .reduce(asyncParallel<Feed[]>(12), Promise.resolve([] as Feed[][]))
-  )
-    // flatten the array
-    .reduce((arr, tweets) => arr.concat(tweets), [])
-    // remove duplicated
-    .filter((tweet, i, arr) => arr.findIndex(t => t.id === tweet.id) === i)
-    // sort by create date
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-  return { feeds, topics };
+  return feeds;
 }

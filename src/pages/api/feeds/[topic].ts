@@ -7,14 +7,14 @@ import { getFeeds } from '../../../helpers/ops';
 const debug = Debug('api:feeds');
 
 const handler: NextApiHandler = async (req, res) => {
-  const { address } = req.query;
+  const { topic } = req.query;
 
-  if (!address) {
-    throw createError(400, 'Invalid address');
+  if (!topic) {
+    throw createError(400, 'Invalid topic');
   }
 
   try {
-    const result = await getFeeds(address.toString(), 'homestead');
+    const result = await getFeeds(topic.toString());
 
     return res.json(result);
   } catch (ex) {

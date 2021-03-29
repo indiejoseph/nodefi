@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react';
 import { AppProps } from 'next/app';
-import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Router from 'next/router';
 import NProgress from 'nprogress';
@@ -10,9 +9,6 @@ import { PushProvider } from '../contexts/push.context';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const isDev = NODE_ENV === 'development';
-const AddToHomeScreen = dynamic(() => import('@ideasio/add-to-homescreen-react'), {
-  ssr: false,
-}) as any;
 
 if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   Sentry.init({
@@ -44,8 +40,6 @@ const App: React.FC<AppProps & { err: any }> = ({ Component, pageProps }: AppPro
       />
       <meta content="The missing DeFi protocols notification centra" name="description" />
     </Head>
-
-    <AddToHomeScreen appId="Nodefi" />
 
     <PushProvider>
       <ConnectionProvider>

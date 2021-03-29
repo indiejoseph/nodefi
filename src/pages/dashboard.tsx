@@ -10,10 +10,53 @@ import { withConnectionRequired } from '../helpers/with-page-connected';
 import { Feed } from '../interfaces';
 
 const debug = Debug('web:dashboard');
+const THREAD = 5;
+
+async function getTopicsClient(address: string) {
+  const response = await fetch(`/api/topics/${address}`);
+  const topics = (await response.json()) as string[];
+
+  return topics;
+}
+
+async function getFeedsByTopicClient(topic: string) {
+  const response = await fetch(`/api/feeds/${topic}`);
+  const feeds = (await response.json()) as Feed[];
+
+  return feeds;
+}
+
+async function getFeedsClient(address: string) {
+  const topics = await getTopicsClient(address);
+  const feeds = await topics
+    .map(topic => () => getFeedsByTopicClient(topic))
+    .reduce(async (p, _ops, index, arr) => {
+      const list = await p;
+
+      if (index % THREAD === 0) {
+        list.push(
+          ...(await Promise.all(
+            arr
+              .slice(index, index + THREAD)
+              .map(ops => ops().then(fs => fs.map(f => ({ ...f, date: new Date(f.date) }))))
+          ))
+        );
+      }
+
+      return list;
+    }, Promise.resolve([]));
+
+  return {
+    topics,
+    feeds: feeds
+      .reduce((list, myList) => list.concat(...myList), [])
+      .sort((a, b) => b.date.getTime() - a.date.getTime()),
+  };
+}
 
 const DashboardPage: NextPage<ConnectionProps> = ({ address }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [feed, setFeeds] = useState<Feed[]>([]);
+  const [feeds, setFeeds] = useState<Feed[]>([]);
   const { client, subscribe, isSubscribed } = useContext(PushContext);
   const [topics, setTopics] = useState<string[]>([]);
   const [, setToast] = useToasts();
@@ -21,22 +64,15 @@ const DashboardPage: NextPage<ConnectionProps> = ({ address }) => {
   useEffect(() => {
     setIsLoading(true);
 
-    fetch(`/api/feeds/${address}`)
-      .then(async response => {
-        const result = (await response.json()) as any;
+    getFeedsClient(address)
+      .then(({ feeds: myFeeds, topics: myTopics }) => {
+        console.log(myTopics, myFeeds);
 
-        setTopics(result.topics);
-
-        setFeeds(
-          (result.feeds || []).map((f: Feed) => ({
-            ...f,
-            date: new Date(f.date),
-          }))
-        );
-
+        setTopics(myTopics);
+        setFeeds(myFeeds);
         setIsLoading(false);
 
-        return true;
+        return { feeds: myFeeds, topics: myTopics };
       })
       .catch(ex => {
         debug(ex);
@@ -86,7 +122,7 @@ const DashboardPage: NextPage<ConnectionProps> = ({ address }) => {
   return (
     <Layout activeMenuItem="dashboard">
       <Text h1>Feed</Text>
-      {isLoading ? <FeedListSkeleton number={10} /> : <FeedList items={feed} />}
+      {isLoading ? <FeedListSkeleton number={10} /> : <FeedList items={feeds} />}
     </Layout>
   );
 };
