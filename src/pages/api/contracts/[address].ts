@@ -2,7 +2,7 @@ import Debug from 'debug';
 import createError from 'http-errors';
 import { NextApiHandler } from 'next';
 import { withExceptionHandler } from '../../../helpers/error-handler';
-import { getTopics } from '../../../helpers/ops';
+import { getContractAddresses } from '../../../helpers/ops';
 
 const debug = Debug('api:topics');
 
@@ -14,9 +14,9 @@ const handler: NextApiHandler = async (req, res) => {
   }
 
   try {
-    const topics = await getTopics(address.toString(), 'homestead');
+    const contractAddresses = await getContractAddresses(address.toString(), 'homestead');
 
-    return res.json(topics);
+    return res.json(contractAddresses);
   } catch (ex) {
     debug('error', ex);
   }

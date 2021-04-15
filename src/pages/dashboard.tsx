@@ -7,13 +7,13 @@ import { FeedList, FeedListSkeleton, Layout } from '../components';
 import { PushContext } from '../contexts';
 import { ConnectionProps } from '../contexts/connection.context';
 import { withConnectionRequired } from '../helpers/with-page-connected';
-import { Feed } from '../interfaces';
+import { Contract, Feed } from '../interfaces';
 
 const debug = Debug('web:dashboard');
 const THREAD = 5;
 
-async function getTopicsClient(address: string) {
-  const response = await fetch(`/api/topics/${address}`);
+async function getContractsClient(address: string) {
+  const response = await fetch(`/api/contracts/${address}`);
   const topics = (await response.json()) as string[];
 
   return topics;
@@ -26,10 +26,31 @@ async function getFeedsByTopicClient(topic: string) {
   return feeds;
 }
 
+async function getContractClient(address: string) {
+  const response = await fetch(`/api/contract/${address}`);
+  const topics = (await response.json()) as Contract;
+
+  return topics;
+}
+
 async function getFeedsClient(address: string) {
-  const topics = await getTopicsClient(address);
-  const feeds = await topics
-    .map(topic => () => getFeedsByTopicClient(topic))
+  const contacts = await getContractsClient(address);
+  const topics = [];
+  const feeds = await contacts
+    .map(contractAddress => async () => {
+      const contract = await getContractClient(contractAddress).catch(() => null);
+      const topic = contract ? contract.slug : 'unknown';
+
+      if (topic === 'unknown' || topics.indexOf(topic) !== -1) {
+        return [];
+      }
+
+      const contractFeeds = await getFeedsByTopicClient(contract.slug).catch(() => []);
+
+      topics.push(topic);
+
+      return contractFeeds;
+    })
     .reduce(async (p, _ops, index, arr) => {
       const list = await p;
 

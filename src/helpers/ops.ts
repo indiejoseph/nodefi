@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import Twit from 'twit';
 import web3 from 'web3';
-import { Contract, Feed, Tweet } from '../interfaces';
-import { getContract, getProject } from './datastore-api';
+import { Feed, Tweet } from '../interfaces';
+import { getProject } from './datastore-api';
 
 const {
   ETHERSCAN_API_KEY,
@@ -101,26 +101,13 @@ export async function getInteractedContractAddresses(address: string, network: s
   return contractAddresses;
 }
 
-export async function getTopics(address: string, network: string): Promise<string[]> {
+export async function getContractAddresses(address: string, network: string): Promise<string[]> {
   const contractAddresses = await getInteractedContractAddresses(address, network);
   const contracts = await contractAddresses
-    .map(contractAddr => async () => {
-      const checksumAddress = web3.utils.toChecksumAddress(contractAddr);
-      const contract = await getContract(checksumAddress).catch(() => ({
-        address: contractAddr,
-        name: 'Unknown',
-        slug: 'unknown',
-      }));
+    .map(contractAddr => async () => web3.utils.toChecksumAddress(contractAddr))
+    .reduce(asyncParallel<string>(12), Promise.resolve([] as string[]));
 
-      return contract;
-    })
-    .reduce(asyncParallel<Contract>(12), Promise.resolve([] as Contract[]));
-  const topics = contracts
-    .map(({ slug }) => slug)
-    .filter((slug, index, arr) => arr.indexOf(slug) !== index) // remove duplicated
-    .filter(slug => slug && slug !== 'unknown');
-
-  return Array.from(new Set(topics));
+  return Array.from(new Set(contracts));
 }
 
 export async function getFeeds(topic: string) {
