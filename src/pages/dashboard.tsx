@@ -66,8 +66,6 @@ const DashboardPage: NextPage<ConnectionProps> = ({ address }) => {
 
     getFeedsClient(address)
       .then(({ feeds: myFeeds, topics: myTopics }) => {
-        console.log(myTopics, myFeeds);
-
         setTopics(myTopics);
         setFeeds(myFeeds);
         setIsLoading(false);
